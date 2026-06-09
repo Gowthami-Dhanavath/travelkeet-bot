@@ -20,6 +20,8 @@ async def get_conversation_repo(db: DbSession) -> ConversationRepo:
 async def get_message_repo(db: DbSession) -> MessageRepo:
     return MessageRepo(db)
 
+async def get_msg_repo(session: AsyncSession):
+    return MessageRepo(session)
 
 ConvRepoDep = Annotated[ConversationRepo, Depends(get_conversation_repo)]
 MsgRepoDep = Annotated[MessageRepo, Depends(get_message_repo)]

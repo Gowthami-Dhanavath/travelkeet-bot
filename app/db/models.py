@@ -42,7 +42,7 @@ class Conversation(Base):
         PG_UUID(as_uuid=True), primary_key=True,
         server_default=text("gen_random_uuid()"),
     )
-    session_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    session_id: Mapped[str] = mapped_column(String(100), unique=True,index=True,nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     collected_slots: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb"),

@@ -1,15 +1,9 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+"""App configuration settings."""
+from pydantic import BaseModel
 
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        extra="ignore",
-    )
-
-    anthropic_api_key: str = ""
-    database_url: str
-    allowed_origins: str = ""
+class Settings(BaseModel):
+    cors_origins: list[str] = []
 
 
 settings = Settings()

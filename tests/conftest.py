@@ -1,5 +1,7 @@
-import pytest
 import asyncio
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.session import AsyncSessionLocal
 
 
@@ -11,8 +13,12 @@ def event_loop():
     loop.close()
 
 
-# Correct DB fixture (THIS FIXES YOUR ERROR)
+# ✅ FIXED DB SESSION (CRITICAL)
 @pytest.fixture
 async def db():
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            await session.rollback()  # prevents cross-test pollution
+            await session.close()
