@@ -1,0 +1,122 @@
+[
+  {
+    "id": "TK-AURA-01",
+    "name": "Aura Compact",
+    "type": "compact",
+    "capacity": 2,
+    "price_per_day": 4500,
+    "base_city": "Mumbai",
+    "features": ["AC", "fridge", "USB-charging", "rooftop-deck"],
+    "description": "Two-berth compact campervan, easy city driving, good fuel economy.",
+    "image_url": "https://travelkeet.com/images/aura.jpg",
+    "is_active": true
+  },
+  {
+    "id": "TK-AURA-02",
+    "name": "Aura Compact",
+    "type": "compact",
+    "capacity": 2,
+    "price_per_day": 4500,
+    "base_city": "Pune",
+    "features": ["AC", "fridge", "USB-charging"],
+    "description": "Two-berth compact campervan, easy city driving.",
+    "image_url": "https://travelkeet.com/images/aura.jpg",
+    "is_active": true
+  },
+  {
+    "id": "TK-NOMAD-01",
+    "name": "Nomad Family",
+    "type": "family",
+    "capacity": 4,
+    "price_per_day": 7500,
+    "base_city": "Mumbai",
+    "features": ["AC", "fridge", "kitchen", "toilet", "USB-charging", "kid-bunks"],
+    "description": "Four-berth family campervan with separate kid bunks and full kitchen.",
+    "image_url": "https://travelkeet.com/images/nomad.jpg",
+    "is_active": true
+  },
+  {
+    "id": "TK-NOMAD-02",
+    "name": "Nomad Family",
+    "type": "family",
+    "capacity": 4,
+    "price_per_day": 7500,
+    "base_city": "Delhi",
+    "features": ["AC", "fridge", "kitchen", "toilet", "USB-charging", "kid-bunks"],
+    "description": "Four-berth family campervan with separate kid bunks.",
+    "image_url": "https://travelkeet.com/images/nomad.jpg",
+    "is_active": true
+  },
+  {
+    "id": "TK-NOMAD-03",
+    "name": "Nomad Family",
+    "type": "family",
+    "capacity": 4,
+    "price_per_day": 7800,
+    "base_city": "Bangalore",
+    "features": ["AC", "fridge", "kitchen", "toilet", "USB-charging"],
+    "description": "Four-berth family campervan.",
+    "image_url": "https://travelkeet.com/images/nomad.jpg",
+    "is_active": true
+  },
+  {
+    "id": "TK-VOYAGER-01",
+    "name": "Voyager XL",
+    "type": "large",
+    "capacity": 6,
+    "price_per_day": 11000,
+    "base_city": "Delhi",
+    "features": ["AC", "fridge", "kitchen", "toilet", "shower", "USB-charging", "rooftop-deck"],
+    "description": "Six-berth large campervan suited to longer journeys and bigger groups.",
+    "image_url": "https://travelkeet.com/images/voyager.jpg",
+    "is_active": true
+  },
+  {
+    "id": "TK-VOYAGER-02",
+    "name": "Voyager XL",
+    "type": "large",
+    "capacity": 6,
+    "price_per_day": 11500,
+    "base_city": "Mumbai",
+    "features": ["AC", "fridge", "kitchen", "toilet", "shower", "USB-charging"],
+    "description": "Six-berth large campervan, group-friendly.",
+    "image_url": "https://travelkeet.com/images/voyager.jpg",
+    "is_active": true
+  },
+  {
+    "id": "TK-PEAK-01",
+    "name": "Peak Explorer",
+    "type": "offroad",
+    "capacity": 4,
+    "price_per_day": 13500,
+    "base_city": "Delhi",
+    "features": ["AC", "fridge", "kitchen", "4x4", "snow-tyres", "heated-cabin"],
+    "description": "Four-wheel-drive campervan rated for Ladakh, Spiti, and snow routes.",
+    "image_url": "https://travelkeet.com/images/peak.jpg",
+    "is_active": true
+  },
+  {
+    "id": "TK-SERENE-01",
+    "name": "Serene Couple",
+    "type": "premium-compact",
+    "capacity": 2,
+    "price_per_day": 8500,
+    "base_city": "Bangalore",
+    "features": ["AC", "fridge", "premium-bedding", "USB-charging", "skylight"],
+    "description": "Premium two-berth campervan with skylight — popular for honeymoons.",
+    "image_url": "https://travelkeet.com/images/serene.jpg",
+    "is_active": true
+  },
+  {
+    "id": "TK-SERENE-02",
+    "name": "Serene Couple",
+    "type": "premium-compact",
+    "capacity": 2,
+    "price_per_day": 8500,
+    "base_city": "Chennai",
+    "features": ["AC", "fridge", "premium-bedding", "USB-charging"],
+    "description": "Premium two-berth campervan, comfortable for couples.",
+    "image_url": "https://travelkeet.com/images/serene.jpg",
+    "is_active": true
+  }
+]
