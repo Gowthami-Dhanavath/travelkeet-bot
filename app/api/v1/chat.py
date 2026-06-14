@@ -3,9 +3,12 @@ import logging
 import time
 
 from fastapi import APIRouter
+from starlette.requests import Request
+from starlette.responses import Response
 
 from app.api.v1.schemas import ChatRequest, ChatResponse
 from app.core.exceptions import ValidationError
+from app.core.rate_limit import CHAT_LIMIT, limiter
 from app.deps import ConvRepoDep, MsgRepoDep
 
 logger = logging.getLogger(__name__)
@@ -14,7 +17,10 @@ router = APIRouter(prefix="/v1", tags=["chat"])
 
 
 @router.post("/chat", response_model=ChatResponse)
+@limiter.limit(CHAT_LIMIT)
 async def chat(
+    request: Request,
+    response: Response,
     req: ChatRequest,
     conv_repo: ConvRepoDep,
     msg_repo: MsgRepoDep,
@@ -56,7 +62,7 @@ async def chat(
     # Stub assistant response (Day 5 replaces this)
     # -------------------------
     stub_reply = (
-        "Thanks for your message. I'm still being wired up — "
+        "Thanks for your message. I'm still being wired up— "
         "the AI brain comes online tomorrow. (Day 5.)"
     )
 
@@ -82,3 +88,4 @@ async def chat(
         conversation_id=conv.id,
         message_id=assistant_msg.id,
     )
+    

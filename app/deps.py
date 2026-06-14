@@ -1,9 +1,12 @@
 """FastAPI dependency providers."""
-from collections.abc import AsyncIterator
+
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.security import require_api_key, require_scope
+from app.db.models import ApiKey
 
 from app.db.repositories import (
     CampervanRepo,
@@ -11,7 +14,9 @@ from app.db.repositories import (
     LeadRepo,
     MessageRepo,
 )
+
 from app.db.session import get_db_session
+
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 
@@ -32,7 +37,28 @@ async def get_campervan_repo(db: DbSession) -> CampervanRepo:
     return CampervanRepo(db)
 
 
-ConvRepoDep = Annotated[ConversationRepo, Depends(get_conversation_repo)]
-MsgRepoDep = Annotated[MessageRepo, Depends(get_message_repo)]
-LeadRepoDep = Annotated[LeadRepo, Depends(get_lead_repo)]
-VanRepoDep = Annotated[CampervanRepo, Depends(get_campervan_repo)]
+ConvRepoDep = Annotated[
+    ConversationRepo,
+    Depends(get_conversation_repo)
+]
+
+MsgRepoDep = Annotated[
+    MessageRepo,
+    Depends(get_message_repo)
+]
+
+LeadRepoDep = Annotated[
+    LeadRepo,
+    Depends(get_lead_repo)
+]
+
+VanRepoDep = Annotated[
+    CampervanRepo,
+    Depends(get_campervan_repo)
+]
+
+
+AdminKey = Annotated[
+    ApiKey,
+    Depends(require_api_key)
+]

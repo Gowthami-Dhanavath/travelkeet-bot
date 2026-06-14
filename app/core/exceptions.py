@@ -56,19 +56,9 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
         )
 
-    @app.exception_handler(SQLAlchemyError)
-    async def handle_db_error(request: Request, exc: SQLAlchemyError) -> JSONResponse:
-        logger.exception("Database error on %s", request.url.path)
-        return JSONResponse(
-            status_code=500,
-            content={
-                "error": {
-                    "code": "database_error",
-                    "message": "A database error occurred. Please try again.",
-                    "request_id": request_id_ctx.get(),
-                }
-            },
-        )
+    @app.exception_handler(Exception)
+    async def handle_unexpected(request: Request, exc: Exception):
+        raise exc
 
     @app.exception_handler(Exception)
     async def handle_unexpected(request: Request, exc: Exception) -> JSONResponse:
