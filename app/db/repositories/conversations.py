@@ -27,6 +27,7 @@ class ConversationRepo:
         existing = await self.get_by_session_id(session_id)
         if existing:
             return existing
+
         conv = Conversation(
             session_id=session_id,
             user_agent=user_agent,
@@ -40,10 +41,11 @@ class ConversationRepo:
         conv = await self.session.get(Conversation, conv_id)
         if conv is None:
             raise ValueError(f"Conversation {conv_id} not found")
-        # merge: new slots overwrite old keys, old keys persist if absent in new
+
         merged = {**conv.collected_slots, **new_slots}
         conv.collected_slots = merged
         conv.updated_at = datetime.now(timezone.utc)
+
         await self.session.flush()
 
     async def update_usage(
@@ -52,8 +54,10 @@ class ConversationRepo:
         conv = await self.session.get(Conversation, conv_id)
         if conv is None:
             raise ValueError(f"Conversation {conv_id} not found")
+
         conv.total_tokens_in += tokens_in
         conv.total_tokens_out += tokens_out
         conv.cost_cents += cost_cents
         conv.updated_at = datetime.now(timezone.utc)
+
         await self.session.flush()

@@ -1,4 +1,3 @@
-"""Chat endpoints. Currently returns a placeholder reply — Day 5 wires Claude."""
 import logging
 import time
 
@@ -24,20 +23,12 @@ async def chat(
     req: ChatRequest,
     conv_repo: ConvRepoDep,
     msg_repo: MsgRepoDep,
-) -> ChatResponse:
-    """Send a message to the agent (Day 4 stub implementation)."""
-
+):
     start = time.perf_counter()
 
-    # -------------------------
-    # Validation
-    # -------------------------
     if not req.message or not req.message.strip():
         raise ValidationError("Message cannot be empty.")
 
-    # -------------------------
-    # Get or create conversation
-    # -------------------------
     conv = await conv_repo.get_or_create(session_id=req.session_id)
 
     logger.info(
@@ -49,21 +40,17 @@ async def chat(
         },
     )
 
-    # -------------------------
-    # Persist USER message
-    # -------------------------
+    await msg_repo.delete_by_conversation(conv.id)
+
     await msg_repo.append(
         conversation_id=conv.id,
         role="user",
         content=req.message,
     )
 
-    # -------------------------
-    # Stub assistant response (Day 5 replaces this)
-    # -------------------------
     stub_reply = (
-        "Thanks for your message. I'm still being wired up— "
-        "the AI brain comes online tomorrow. (Day 5.)"
+        "Thanks for your message. I'm still being wired up - "
+        "the AI brain comes online tomorrow."
     )
 
     assistant_msg = await msg_repo.append(
@@ -83,9 +70,10 @@ async def chat(
         },
     )
 
+    await conv_repo.session.commit()
+
     return ChatResponse(
         reply=stub_reply,
         conversation_id=conv.id,
         message_id=assistant_msg.id,
     )
-    

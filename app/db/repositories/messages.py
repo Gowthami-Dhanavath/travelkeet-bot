@@ -1,7 +1,9 @@
 """Repository for the messages table."""
+
+from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Message
@@ -26,6 +28,7 @@ class MessageRepo:
     ) -> Message:
         if role not in {"user", "assistant", "tool"}:
             raise ValueError(f"Invalid role: {role}")
+
         msg = Message(
             conversation_id=conversation_id,
             role=role,
@@ -37,30 +40,47 @@ class MessageRepo:
             tokens_out=tokens_out,
             latency_ms=latency_ms,
             prompt_version=prompt_version,
+            created_at=datetime.now(timezone.utc),
         )
+
         self.session.add(msg)
         await self.session.flush()
+        await self.session.refresh(msg)
         return msg
 
-    async def get_window(
-        self, conversation_id: UUID, max_turns: int = 15
-    ) -> list[Message]:
-        """Return the last (max_turns * 2) messages in chronological order.
+    async def get_by_conversation(self, conversation_id: UUID) -> list[Message]:
+        result = await self.session.execute(
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.created_at.asc())
+        )
+        return list(result.scalars().all())
 
-        Used by the agent to build the messages array sent to Claude.
-        """
+    async def delete_by_conversation(self, conversation_id: UUID) -> None:
+        await self.session.execute(
+            delete(Message).where(Message.conversation_id == conversation_id)
+        )
+        await self.session.flush()
+
+    async def get_window(
+        self,
+        conversation_id: UUID,
+        max_turns: int = 15,
+    ) -> list[Message]:
         result = await self.session.execute(
             select(Message)
             .where(Message.conversation_id == conversation_id)
             .order_by(Message.created_at.desc())
             .limit(max_turns * 2)
         )
-        msgs = list(result.scalars().all())
-        msgs.reverse()  # chronological for Claude
-        return msgs
+
+        messages = list(result.scalars().all())
+        messages.reverse()
+        return messages
 
     async def count(self, conversation_id: UUID) -> int:
         from sqlalchemy import func
+
         result = await self.session.execute(
             select(func.count(Message.id)).where(
                 Message.conversation_id == conversation_id
