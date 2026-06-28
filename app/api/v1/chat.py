@@ -40,8 +40,6 @@ async def chat(
         },
     )
 
-    await msg_repo.delete_by_conversation(conv.id)
-
     await msg_repo.append(
         conversation_id=conv.id,
         role="user",

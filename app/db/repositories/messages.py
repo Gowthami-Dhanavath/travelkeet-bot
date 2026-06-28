@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Message
@@ -56,12 +56,6 @@ class MessageRepo:
         )
         return list(result.scalars().all())
 
-    async def delete_by_conversation(self, conversation_id: UUID) -> None:
-        await self.session.execute(
-            delete(Message).where(Message.conversation_id == conversation_id)
-        )
-        await self.session.flush()
-
     async def get_window(
         self,
         conversation_id: UUID,
@@ -79,8 +73,6 @@ class MessageRepo:
         return messages
 
     async def count(self, conversation_id: UUID) -> int:
-        from sqlalchemy import func
-
         result = await self.session.execute(
             select(func.count(Message.id)).where(
                 Message.conversation_id == conversation_id
