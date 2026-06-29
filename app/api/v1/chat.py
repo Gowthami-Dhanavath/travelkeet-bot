@@ -1,4 +1,5 @@
-"""Chat endpoints. Currently returns a placeholder reply — Day 5 wires Claude."""
+"""Chat endpoints. Uses AgentOrchestrator interface."""
+
 import logging
 import time
 
@@ -9,7 +10,7 @@ from starlette.responses import Response
 from app.api.v1.schemas import ChatRequest, ChatResponse
 from app.core.exceptions import ValidationError
 from app.core.rate_limit import CHAT_LIMIT, limiter
-from app.deps import ConvRepoDep, MsgRepoDep
+from app.deps import ConvRepoDep, MsgRepoDep, OrchestratorDep
 
 logger = logging.getLogger(__name__)
 
@@ -24,21 +25,18 @@ async def chat(
     req: ChatRequest,
     conv_repo: ConvRepoDep,
     msg_repo: MsgRepoDep,
+    orch: OrchestratorDep,
 ) -> ChatResponse:
-    """Send a message to the agent (Day 4 stub implementation)."""
+    """Send a message to the agent."""
 
     start = time.perf_counter()
 
-    # -------------------------
-    # Validation
-    # -------------------------
     if not req.message or not req.message.strip():
         raise ValidationError("Message cannot be empty.")
 
-    # -------------------------
-    # Get or create conversation
-    # -------------------------
-    conv = await conv_repo.get_or_create(session_id=req.session_id)
+    conv = await conv_repo.get_or_create(
+        session_id=req.session_id
+    )
 
     logger.info(
         "Chat turn received",
@@ -49,43 +47,30 @@ async def chat(
         },
     )
 
-    # -------------------------
-    # Persist USER message
-    # -------------------------
     await msg_repo.append(
         conversation_id=conv.id,
         role="user",
         content=req.message,
     )
 
-    # -------------------------
-    # Stub assistant response (Day 5 replaces this)
-    # -------------------------
-    stub_reply = (
-        "Thanks for your message. I'm still being wired up— "
-        "the AI brain comes online tomorrow. (Day 5.)"
-    )
-
-    assistant_msg = await msg_repo.append(
-        conversation_id=conv.id,
-        role="assistant",
-        content=stub_reply,
-        model="stub",
-        latency_ms=int((time.perf_counter() - start) * 1000),
+    agent_response = await orch.handle_message(
+        req.session_id,
+        req.message,
     )
 
     logger.info(
         "Chat turn completed",
         extra={
-            "conversation_id": str(conv.id),
-            "message_id": str(assistant_msg.id),
-            "latency_ms": int((time.perf_counter() - start) * 1000),
+            "conversation_id": str(agent_response.conversation_id),
+            "message_id": str(agent_response.message_id),
+            "latency_ms": int(
+                (time.perf_counter() - start) * 1000
+            ),
         },
     )
 
     return ChatResponse(
-        reply=stub_reply,
-        conversation_id=conv.id,
-        message_id=assistant_msg.id,
+        reply=agent_response.text,
+        conversation_id=agent_response.conversation_id,
+        message_id=agent_response.message_id,
     )
-    
