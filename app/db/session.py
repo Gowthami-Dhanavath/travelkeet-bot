@@ -35,12 +35,11 @@ class Base(DeclarativeBase):
 # Dependency for FastAPI + tests
 # -------------------------
 async def get_db_session():
-    """
-    ONE session per request/test.
-    CRITICAL: prevents 'different loop' asyncpg errors.
-    """
     async with AsyncSessionLocal() as session:
         try:
             yield session
-        finally:
-            await session.close()
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        

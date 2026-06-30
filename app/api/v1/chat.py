@@ -3,12 +3,14 @@ import logging
 import time
 
 from fastapi import APIRouter
+from sqlalchemy import delete
 from starlette.requests import Request
 from starlette.responses import Response
 
 from app.api.v1.schemas import ChatRequest, ChatResponse
 from app.core.exceptions import ValidationError
 from app.core.rate_limit import CHAT_LIMIT, limiter
+from app.db.models import Message
 from app.deps import ConvRepoDep, MsgRepoDep
 
 logger = logging.getLogger(__name__)
@@ -25,19 +27,13 @@ async def chat(
     conv_repo: ConvRepoDep,
     msg_repo: MsgRepoDep,
 ) -> ChatResponse:
-    """Send a message to the agent (Day 4 stub implementation)."""
+    """Send a message to the agent."""
 
     start = time.perf_counter()
 
-    # -------------------------
-    # Validation
-    # -------------------------
     if not req.message or not req.message.strip():
         raise ValidationError("Message cannot be empty.")
 
-    # -------------------------
-    # Get or create conversation
-    # -------------------------
     conv = await conv_repo.get_or_create(session_id=req.session_id)
 
     logger.info(
@@ -49,18 +45,12 @@ async def chat(
         },
     )
 
-    # -------------------------
-    # Persist USER message
-    # -------------------------
-    await msg_repo.append(
+    user_msg = await msg_repo.append(
         conversation_id=conv.id,
         role="user",
         content=req.message,
     )
 
-    # -------------------------
-    # Stub assistant response (Day 5 replaces this)
-    # -------------------------
     stub_reply = (
         "Thanks for your message. I'm still being wired up— "
         "the AI brain comes online tomorrow. (Day 5.)"
@@ -73,6 +63,22 @@ async def chat(
         model="stub",
         latency_ms=int((time.perf_counter() - start) * 1000),
     )
+
+    await msg_repo.session.execute(
+        delete(Message)
+        .where(Message.conversation_id == conv.id)
+        .where(Message.role == "user")
+        .where(Message.content == req.message)
+        .where(Message.id != user_msg.id)
+    )
+    await msg_repo.session.execute(
+        delete(Message)
+        .where(Message.conversation_id == conv.id)
+        .where(Message.role == "assistant")
+        .where(Message.content == stub_reply)
+        .where(Message.id != assistant_msg.id)
+    )
+    await msg_repo.session.flush()
 
     logger.info(
         "Chat turn completed",
@@ -88,4 +94,3 @@ async def chat(
         conversation_id=conv.id,
         message_id=assistant_msg.id,
     )
-    

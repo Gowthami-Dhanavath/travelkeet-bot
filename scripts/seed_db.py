@@ -1,23 +1,27 @@
-"""Seed the local database with campervan inventory for development.
+"""
+Seed the local database with campervan + package inventory for development.
 
 Idempotent: re-running upserts, doesn't duplicate.
 Run: python scripts/seed_db.py
 """
+
 import asyncio
 import json
 import sys
 from pathlib import Path
 
-from app.db.repositories import CampervanRepo
+from app.db.repositories import CampervanRepo, PackageRepo
 from app.db.session import AsyncSessionLocal
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
 SEED_FILE = REPO_ROOT / "data" / "campervans.seed.json"
+PACKAGES_FILE = REPO_ROOT / "data" / "packages.seed.json"
 
 
-async def main():
+async def seed_campervans():
     if not SEED_FILE.exists():
-        print(f"ERROR: seed file not found at {SEED_FILE}", file=sys.stderr)
+        print(f"ERROR: campervan seed file not found at {SEED_FILE}", file=sys.stderr)
         sys.exit(1)
 
     vans = json.loads(SEED_FILE.read_text())
@@ -34,6 +38,29 @@ async def main():
             raise
 
 
+async def seed_packages():
+    if not PACKAGES_FILE.exists():
+        print(f"WARNING: package seed file not found at {PACKAGES_FILE}")
+        return
+
+    packages = json.loads(PACKAGES_FILE.read_text())
+    print(f"Loaded {len(packages)} packages from seed file.")
+
+    async with AsyncSessionLocal() as session:
+        try:
+            repo = PackageRepo(session)
+            affected = await repo.upsert_many(packages)
+            await session.commit()
+            print(f"OK: upserted {affected} rows into packages.")
+        except Exception:
+            await session.rollback()
+            raise
+
+
+async def main():
+    await seed_campervans()
+    await seed_packages()
+
+
 if __name__ == "__main__":
     asyncio.run(main())
-    

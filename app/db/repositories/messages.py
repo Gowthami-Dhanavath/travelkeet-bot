@@ -1,7 +1,6 @@
 """Repository for the messages table."""
 from uuid import UUID
-
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Message
@@ -24,8 +23,10 @@ class MessageRepo:
         latency_ms: int | None = None,
         prompt_version: str | None = None,
     ) -> Message:
+
         if role not in {"user", "assistant", "tool"}:
             raise ValueError(f"Invalid role: {role}")
+
         msg = Message(
             conversation_id=conversation_id,
             role=role,
@@ -38,17 +39,12 @@ class MessageRepo:
             latency_ms=latency_ms,
             prompt_version=prompt_version,
         )
+
         self.session.add(msg)
         await self.session.flush()
         return msg
 
-    async def get_window(
-        self, conversation_id: UUID, max_turns: int = 15
-    ) -> list[Message]:
-        """Return the last (max_turns * 2) messages in chronological order.
-
-        Used by the agent to build the messages array sent to Claude.
-        """
+    async def get_window(self, conversation_id: UUID, max_turns: int = 15):
         result = await self.session.execute(
             select(Message)
             .where(Message.conversation_id == conversation_id)
@@ -56,11 +52,10 @@ class MessageRepo:
             .limit(max_turns * 2)
         )
         msgs = list(result.scalars().all())
-        msgs.reverse()  # chronological for Claude
+        msgs.reverse()
         return msgs
 
     async def count(self, conversation_id: UUID) -> int:
-        from sqlalchemy import func
         result = await self.session.execute(
             select(func.count(Message.id)).where(
                 Message.conversation_id == conversation_id

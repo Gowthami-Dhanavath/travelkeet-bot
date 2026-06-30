@@ -1,0 +1,15 @@
+[
+  {
+    "id": "PKG-KASHMIR-5D",
+    "name": "Kashmir Valley 5-Day",
+    "destination": "Srinagar to Gulmarg",
+    "duration_days": 5,
+    "price_inr": 75000,
+    "inclusions": ["Campervan", "Houseboat", "Guide"],
+    "itinerary": {
+      "day_1": "Srinagar arrival",
+      "day_2": "Pahalgam drive"
+    },
+    "is_active": true
+  }
+]

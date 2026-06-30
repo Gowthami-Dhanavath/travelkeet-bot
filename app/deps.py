@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import require_api_key, require_scope
+from app.core.security import require_api_key
 from app.db.models import ApiKey
 
 from app.db.repositories import (
@@ -39,26 +39,26 @@ async def get_campervan_repo(db: DbSession) -> CampervanRepo:
 
 ConvRepoDep = Annotated[
     ConversationRepo,
-    Depends(get_conversation_repo)
+    Depends(get_conversation_repo),
 ]
 
 MsgRepoDep = Annotated[
     MessageRepo,
-    Depends(get_message_repo)
+    Depends(get_message_repo),
 ]
 
 LeadRepoDep = Annotated[
     LeadRepo,
-    Depends(get_lead_repo)
+    Depends(get_lead_repo),
 ]
 
 VanRepoDep = Annotated[
     CampervanRepo,
-    Depends(get_campervan_repo)
+    Depends(get_campervan_repo),
 ]
 
 
 AdminKey = Annotated[
     ApiKey,
-    Depends(require_api_key)
+    Depends(require_api_key),
 ]
