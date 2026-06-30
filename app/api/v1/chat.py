@@ -1,4 +1,4 @@
-"""Chat endpoints. Currently returns a placeholder reply — Day 5 wires Claude."""
+"""Chat endpoints."""
 import logging
 import time
 
@@ -6,6 +6,7 @@ from fastapi import APIRouter
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.agent.orchestrator import AgentOrchestrator
 from app.api.v1.schemas import ChatRequest, ChatResponse
 from app.core.exceptions import ValidationError
 from app.core.rate_limit import CHAT_LIMIT, limiter
@@ -25,19 +26,12 @@ async def chat(
     conv_repo: ConvRepoDep,
     msg_repo: MsgRepoDep,
 ) -> ChatResponse:
-    """Send a message to the agent (Day 4 stub implementation)."""
 
     start = time.perf_counter()
 
-    # -------------------------
-    # Validation
-    # -------------------------
     if not req.message or not req.message.strip():
         raise ValidationError("Message cannot be empty.")
 
-    # -------------------------
-    # Get or create conversation
-    # -------------------------
     conv = await conv_repo.get_or_create(session_id=req.session_id)
 
     logger.info(
@@ -49,43 +43,34 @@ async def chat(
         },
     )
 
-    # -------------------------
-    # Persist USER message
-    # -------------------------
-    await msg_repo.append(
+    user_msg = await msg_repo.append(
         conversation_id=conv.id,
         role="user",
         content=req.message,
     )
 
-    # -------------------------
-    # Stub assistant response (Day 5 replaces this)
-    # -------------------------
-    stub_reply = (
-        "Thanks for your message. I'm still being wired up— "
-        "the AI brain comes online tomorrow. (Day 5.)"
+    orchestrator = AgentOrchestrator(
+        conv_repo=conv_repo,
+        msg_repo=msg_repo,
     )
 
-    assistant_msg = await msg_repo.append(
-        conversation_id=conv.id,
-        role="assistant",
-        content=stub_reply,
-        model="stub",
-        latency_ms=int((time.perf_counter() - start) * 1000),
+    agent_response = await orchestrator.handle_message(
+        session_id=req.session_id,
+        user_message=req.message,
     )
 
     logger.info(
         "Chat turn completed",
         extra={
-            "conversation_id": str(conv.id),
-            "message_id": str(assistant_msg.id),
+            "conversation_id": str(agent_response.conversation_id),
+            "user_message_id": str(user_msg.id),
+            "assistant_message_id": str(agent_response.message_id),
             "latency_ms": int((time.perf_counter() - start) * 1000),
         },
     )
 
     return ChatResponse(
-        reply=stub_reply,
-        conversation_id=conv.id,
-        message_id=assistant_msg.id,
+        reply=agent_response.text,
+        conversation_id=agent_response.conversation_id,
+        message_id=agent_response.message_id,
     )
-    
