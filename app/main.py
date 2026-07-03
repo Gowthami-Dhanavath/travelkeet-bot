@@ -1,8 +1,11 @@
 """FastAPI application factory."""
 import logging
+import sys
+import traceback
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
 from app.api.admin.health import router as admin_health_router
@@ -18,10 +21,12 @@ def create_app() -> FastAPI:
     configure_logging("INFO")
     logger = logging.getLogger(__name__)
 
+    # ✅ DEBUG ENABLED (safe for now)
     app = FastAPI(
         title="TravelKeet Bot",
         version="0.1.0",
         description="AI trip planner for TravelKeet campervan rentals",
+        debug=True,   # 🔥 IMPORTANT
     )
 
     app.state.limiter = limiter
@@ -50,6 +55,22 @@ def create_app() -> FastAPI:
             "service": "travelkeet-bot",
             "version": "0.1.0",
         }
+
+    # 🔥 GLOBAL ERROR HANDLER (FORCE REAL ERROR OUTPUT)
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        traceback.print_exc(file=sys.stdout)
+        logger.error("Unhandled exception", exc_info=True)
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": {
+                    "code": "internal_error",
+                    "message": str(exc),
+                }
+            },
+        )
 
     logger.info("Application initialised")
     return app

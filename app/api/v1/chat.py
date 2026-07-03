@@ -1,15 +1,14 @@
-"""Chat endpoints. Currently returns a placeholder reply — Day 5 wires Claude."""
+"""Chat endpoints wired to Day 11 AgentOrchestrator."""
+
 import logging
 import time
 
-from fastapi import APIRouter
-from starlette.requests import Request
-from starlette.responses import Response
+from fastapi import APIRouter, Request, Response
 
 from app.api.v1.schemas import ChatRequest, ChatResponse
 from app.core.exceptions import ValidationError
 from app.core.rate_limit import CHAT_LIMIT, limiter
-from app.deps import ConvRepoDep, MsgRepoDep
+from app.deps import OrchestratorDep
 
 logger = logging.getLogger(__name__)
 
@@ -22,70 +21,57 @@ async def chat(
     request: Request,
     response: Response,
     req: ChatRequest,
-    conv_repo: ConvRepoDep,
-    msg_repo: MsgRepoDep,
+    orch: OrchestratorDep,
 ) -> ChatResponse:
-    """Send a message to the agent (Day 4 stub implementation)."""
 
     start = time.perf_counter()
 
     # -------------------------
-    # Validation
+    # VALIDATION
     # -------------------------
     if not req.message or not req.message.strip():
         raise ValidationError("Message cannot be empty.")
 
-    # -------------------------
-    # Get or create conversation
-    # -------------------------
-    conv = await conv_repo.get_or_create(session_id=req.session_id)
+    try:
+        # -------------------------
+        # ORCHESTRATOR CALL
+        # -------------------------
+        result = await orch.handle_message(
+            session_id=req.session_id,
+            user_message=req.message,
+            history=[],
+        )
 
-    logger.info(
-        "Chat turn received",
-        extra={
-            "session_id": req.session_id,
-            "conversation_id": str(conv.id),
-            "message_len": len(req.message),
-        },
-    )
+        # -------------------------
+        # NORMALIZE OUTPUT SAFELY
+        # -------------------------
+        reply = result.get("reply", "")
 
-    # -------------------------
-    # Persist USER message
-    # -------------------------
-    await msg_repo.append(
-        conversation_id=conv.id,
-        role="user",
-        content=req.message,
-    )
+        conversation_id = result.get("conversation_id")
+        message_id = result.get("message_id")
 
-    # -------------------------
-    # Stub assistant response (Day 5 replaces this)
-    # -------------------------
-    stub_reply = (
-        "Thanks for your message. I'm still being wired up— "
-        "the AI brain comes online tomorrow. (Day 5.)"
-    )
+        tool_calls = result.get("tool_calls") or []
+        slots = result.get("slots") or {}
 
-    assistant_msg = await msg_repo.append(
-        conversation_id=conv.id,
-        role="assistant",
-        content=stub_reply,
-        model="stub",
-        latency_ms=int((time.perf_counter() - start) * 1000),
-    )
+        # Ensure tool_calls is always JSON-safe list
+        if isinstance(tool_calls, dict):
+            tool_calls = [tool_calls]
 
-    logger.info(
-        "Chat turn completed",
-        extra={
-            "conversation_id": str(conv.id),
-            "message_id": str(assistant_msg.id),
-            "latency_ms": int((time.perf_counter() - start) * 1000),
-        },
-    )
+        # -------------------------
+        # RESPONSE BUILD
+        # -------------------------
+        return ChatResponse(
+            reply=reply,
+            conversation_id=str(conversation_id),
+            message_id=str(message_id),
+            tool_calls=tool_calls,
+            slots=slots if isinstance(slots, dict) else {},
+        )
 
-    return ChatResponse(
-        reply=stub_reply,
-        conversation_id=conv.id,
-        message_id=assistant_msg.id,
-    )
-    
+    except Exception as e:
+        logger.exception("Chat endpoint crashed: %s", str(e))
+        raise
+
+    finally:
+        latency_ms = int((time.perf_counter() - start) * 1000)
+        logger.info("Chat turn completed", extra={"latency_ms": latency_ms})

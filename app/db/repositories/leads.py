@@ -1,4 +1,5 @@
 """Repository for the leads table."""
+import logging
 import re
 from datetime import date, datetime, timezone
 from uuid import UUID
@@ -8,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundError, ValidationError
 from app.db.models import Lead
+
+logger = logging.getLogger(__name__)
 
 
 # Accepts: 9876543210, +919876543210, +91 9876543210, +91-9876543210
@@ -72,6 +75,13 @@ class LeadRepo:
         )
         self.session.add(lead)
         await self.session.flush()
+        logger.info(
+            "DB lead written",
+            extra={
+                "conversation_id": str(conversation_id) if conversation_id else None,
+                "lead_id": str(lead.id),
+            },
+        )
         return lead
 
     async def get(self, lead_id: UUID) -> Lead:

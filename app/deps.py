@@ -1,21 +1,23 @@
 """FastAPI dependency providers."""
 
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import require_api_key, require_scope
+from app.agent.orchestrator import AgentOrchestrator
+from app.agent.tools.registry import build_registry
+from app.core.security import require_api_key
 from app.db.models import ApiKey
-
 from app.db.repositories import (
     CampervanRepo,
     ConversationRepo,
     LeadRepo,
     MessageRepo,
 )
-
 from app.db.session import get_db_session
+from app.integrations.grok import GrokClient
 
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
@@ -39,26 +41,50 @@ async def get_campervan_repo(db: DbSession) -> CampervanRepo:
 
 ConvRepoDep = Annotated[
     ConversationRepo,
-    Depends(get_conversation_repo)
+    Depends(get_conversation_repo),
 ]
 
 MsgRepoDep = Annotated[
     MessageRepo,
-    Depends(get_message_repo)
+    Depends(get_message_repo),
 ]
 
 LeadRepoDep = Annotated[
     LeadRepo,
-    Depends(get_lead_repo)
+    Depends(get_lead_repo),
 ]
 
 VanRepoDep = Annotated[
     CampervanRepo,
-    Depends(get_campervan_repo)
+    Depends(get_campervan_repo),
+]
+
+
+@lru_cache(maxsize=1)
+def get_grok_model():
+    return GrokClient()
+
+
+async def get_orchestrator(
+    conv_repo: ConvRepoDep,
+    msg_repo: MsgRepoDep,
+    lead_repo: LeadRepoDep,
+):
+    return AgentOrchestrator(
+        client=get_grok_model(),
+        conv_repo=conv_repo,
+        msg_repo=msg_repo,
+        tools=build_registry(lead_repo=lead_repo),
+    )
+
+
+OrchestratorDep = Annotated[
+    AgentOrchestrator,
+    Depends(get_orchestrator),
 ]
 
 
 AdminKey = Annotated[
     ApiKey,
-    Depends(require_api_key)
+    Depends(require_api_key),
 ]

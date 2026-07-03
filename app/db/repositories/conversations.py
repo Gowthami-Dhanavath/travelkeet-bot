@@ -1,4 +1,5 @@
 """Repository for the conversations table."""
+import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -6,6 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Conversation
+
+logger = logging.getLogger(__name__)
 
 
 class ConversationRepo:
@@ -45,6 +48,10 @@ class ConversationRepo:
         conv.collected_slots = merged
         conv.updated_at = datetime.now(timezone.utc)
         await self.session.flush()
+        logger.info(
+            "DB conversation slots written",
+            extra={"conversation_id": str(conv_id), "slot_keys": list(new_slots.keys())},
+        )
 
     async def update_usage(
         self, conv_id: UUID, tokens_in: int, tokens_out: int, cost_cents: int

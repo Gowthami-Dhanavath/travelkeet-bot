@@ -1,9 +1,7 @@
 """Pydantic models for the public chat API.
 
-These are the shapes Person A's orchestrator must produce/consume.
-Changing them requires a coordination message — they're the contract.
+These are the request/response contracts for the public chat endpoint.
 """
-from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -14,6 +12,7 @@ class ChatRequest(BaseModel):
         max_length=100,
         description="Stable per-browser session ID assigned by the embed script.",
     )
+
     message: str = Field(
         min_length=1,
         max_length=2000,
@@ -22,6 +21,24 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    reply: str = Field(description="Assistant's text reply.")
-    conversation_id: UUID = Field(description="Server conversation ID for the session.")
-    message_id: UUID = Field(description="ID of the assistant message; used for /feedback.")
+    reply: str = Field(
+        description="Assistant's text reply."
+    )
+
+    conversation_id: str = Field(
+        description="Server conversation ID for the session.",
+    )
+
+    message_id: str = Field(
+        description="Assistant message ID.",
+    )
+
+    tool_calls: list[dict] = Field(
+        default_factory=list,
+        description="Tool calls executed by the agent.",
+    )
+
+    slots: dict = Field(
+        default_factory=dict,
+        description="Collected trip slots after this turn.",
+    )

@@ -85,7 +85,7 @@ class Message(Base):
     )
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     content: Mapped[str | None] = mapped_column(Text)
-    tool_calls: Mapped[dict | None] = mapped_column(JSONB)
+    tool_calls: Mapped[dict | list | None] = mapped_column(JSONB)
     tool_results: Mapped[dict | None] = mapped_column(JSONB)
     model: Mapped[str | None] = mapped_column(String(50))
     tokens_in: Mapped[int | None] = mapped_column(Integer)

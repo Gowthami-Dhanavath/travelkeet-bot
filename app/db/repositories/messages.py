@@ -1,10 +1,13 @@
 """Repository for the messages table."""
+import logging
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Message
+
+logger = logging.getLogger(__name__)
 
 
 class MessageRepo:
@@ -16,7 +19,7 @@ class MessageRepo:
         conversation_id: UUID,
         role: str,
         content: str | None = None,
-        tool_calls: dict | None = None,
+        tool_calls: dict | list | None = None,
         tool_results: dict | None = None,
         model: str | None = None,
         tokens_in: int | None = None,
@@ -40,6 +43,14 @@ class MessageRepo:
         )
         self.session.add(msg)
         await self.session.flush()
+        logger.info(
+            "DB message written",
+            extra={
+                "conversation_id": str(conversation_id),
+                "message_id": str(msg.id),
+                "role": role,
+            },
+        )
         return msg
 
     async def get_window(
