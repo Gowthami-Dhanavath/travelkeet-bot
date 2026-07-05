@@ -42,3 +42,4 @@ class ChatResponse(BaseModel):
         default_factory=dict,
         description="Collected trip slots after this turn.",
     )
+

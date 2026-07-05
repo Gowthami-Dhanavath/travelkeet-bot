@@ -1,7 +1,7 @@
 """Thin async wrapper around Groq via OpenAI-compatible API.
 
 Groq provides ultra-fast inference on open-weight models (Llama, Mixtral, etc.)
-via their LPU hardware. API is OpenAI-compatible.
+via their OpenAI-compatible API.
 """
 
 import logging
@@ -12,6 +12,8 @@ from openai import AsyncOpenAI
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
 class GroqClient:
@@ -30,7 +32,7 @@ class GroqClient:
         self,
         prompt: str,
         *,
-        model: str = "llama-3.3-70b-versatile",
+        model: str = GROQ_MODEL,
     ) -> str:
         """
         Backward-compatible method used by the existing AgentOrchestrator.
@@ -45,7 +47,7 @@ class GroqClient:
         prompt: str,
         *,
         system_instruction: str | None = None,
-        model: str = "llama-3.3-70b-versatile",
+        model: str = GROQ_MODEL,
     ) -> str:
         """Simple text generation."""
 
@@ -79,7 +81,7 @@ class GroqClient:
         system_instruction: str,
         history: list,
         tool_declarations: list[dict],
-        model: str = "llama-3.3-70b-versatile",
+        model: str = GROQ_MODEL,
     ):
         """Tool-calling variant."""
 
@@ -111,6 +113,38 @@ class GroqClient:
         response.latency_ms = int((time.perf_counter() - start) * 1000)
 
         return response
+
+    async def stream_reply(
+        self,
+        *,
+        system_instruction: str,
+        history: list,
+        model: str ="llama-3.3-70b-versatile",
+    ):
+        """
+        Stream text responses from Groq.
+        Text-only streaming for the SSE endpoint.
+        """
+
+        messages = [
+            {
+                "role": "system",
+                "content": system_instruction,
+            }
+        ]
+
+        messages.extend(history)
+
+        stream = await self._client.chat.completions.create(
+            model=model,
+            messages=messages,
+            stream=True,
+        )
+
+        async for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield delta
 
 
 @staticmethod

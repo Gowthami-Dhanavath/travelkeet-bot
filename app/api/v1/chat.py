@@ -4,7 +4,7 @@ import logging
 import time
 
 from fastapi import APIRouter, Request, Response
-
+from sse_starlette.sse import EventSourceResponse
 from app.api.v1.schemas import ChatRequest, ChatResponse
 from app.core.exceptions import ValidationError
 from app.core.rate_limit import CHAT_LIMIT, limiter
@@ -75,3 +75,44 @@ async def chat(
     finally:
         latency_ms = int((time.perf_counter() - start) * 1000)
         logger.info("Chat turn completed", extra={"latency_ms": latency_ms})
+@router.post("/chat/stream")
+@limiter.limit(CHAT_LIMIT)
+async def chat_stream(
+    request: Request,
+    req: ChatRequest,
+    orch: OrchestratorDep,
+):
+    """
+    Server-Sent Events streaming endpoint.
+
+    Streams tokens produced by AgentOrchestrator.stream_message().
+    """
+
+    if not req.message or not req.message.strip():
+        raise ValidationError("Message cannot be empty.")
+
+    async def event_generator():
+        try:
+            async for token in orch.stream_message(
+                session_id=req.session_id,
+                user_message=req.message,
+            ):
+                yield {
+                    "event": "token",
+                    "data": token,
+                }
+
+            yield {
+                "event": "done",
+                "data": "{}",
+            }
+
+        except Exception as exc:
+            logger.exception("Streaming endpoint failed")
+
+            yield {
+                "event": "error",
+                "data": str(exc),
+            }
+
+    return EventSourceResponse(event_generator())

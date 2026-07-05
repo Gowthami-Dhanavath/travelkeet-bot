@@ -130,3 +130,4 @@ class LeadRepo:
             select(Lead.status, func.count(Lead.id)).group_by(Lead.status)
         )
         return {row[0]: row[1] for row in result.all()}
+

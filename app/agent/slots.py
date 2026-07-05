@@ -34,3 +34,4 @@ class SlotExtractor:
             updated_slots["budget_inr"] = int(budget.group(1).replace(",", ""))
 
         return updated_slots
+

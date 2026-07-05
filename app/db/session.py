@@ -48,3 +48,4 @@ async def get_db_session():
             raise
         finally:
             await session.close()
+

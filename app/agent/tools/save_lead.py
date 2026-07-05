@@ -29,3 +29,4 @@ async def handle_save_lead(args: dict) -> dict:
     }
 
 ToolRegistry.register(DECLARATION, handle_save_lead)
+

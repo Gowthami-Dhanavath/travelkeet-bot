@@ -66,3 +66,4 @@ search_campervans_declaration = {
         }
     }
 }
+

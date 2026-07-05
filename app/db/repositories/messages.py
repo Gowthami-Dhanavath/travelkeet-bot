@@ -78,3 +78,4 @@ class MessageRepo:
             )
         )
         return result.scalar_one()
+

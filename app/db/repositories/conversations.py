@@ -64,3 +64,4 @@ class ConversationRepo:
         conv.cost_cents += cost_cents
         conv.updated_at = datetime.now(timezone.utc)
         await self.session.flush()
+

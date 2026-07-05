@@ -1,8 +1,59 @@
 """Integration tests for the /v1/chat endpoint."""
 import pytest
+import uuid
+from uuid import uuid4
+from fastapi import Depends
 from httpx import ASGITransport, AsyncClient
 
+from app.agent.schemas import AgentResponse
+from app.db.repositories import ConversationRepo, MessageRepo
+from app.deps import get_conversation_repo, get_message_repo, get_orchestrator
 from app.main import app
+
+
+@pytest.fixture(autouse=True)
+def stub_orchestrator():
+    class StubAgentResponse(AgentResponse):
+        def get(self, key, default=None):
+            if key == "reply":
+                return self.text
+            return getattr(self, key, default)
+
+    class FakeOrch:
+        def __init__(self, conv_repo, msg_repo):
+            self.conv_repo = conv_repo
+            self.msg_repo = msg_repo
+
+        async def handle_message(self, session_id, user_message, **kwargs):
+            conversation = await self.conv_repo.get_or_create(session_id=session_id)
+            await self.msg_repo.append(
+                conversation_id=conversation.id,
+                role="user",
+                content=user_message,
+            )
+            assistant_message = await self.msg_repo.append(
+                conversation_id=conversation.id,
+                role="assistant",
+                content="stubbed",
+                tool_calls=[],
+            )
+            return StubAgentResponse(
+                text="stubbed",
+                conversation_id=conversation.id,
+                message_id=assistant_message.id,
+                tool_calls=[],
+                slots={},
+            )
+
+    async def fake_orchestrator(
+        conv_repo: ConversationRepo = Depends(get_conversation_repo),
+        msg_repo: MessageRepo = Depends(get_message_repo),
+    ):
+        return FakeOrch(conv_repo=conv_repo, msg_repo=msg_repo)
+
+    app.dependency_overrides[get_orchestrator] = fake_orchestrator
+    yield
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
@@ -61,7 +112,9 @@ async def test_chat_rejects_whitespace_only_message():
 
 
 @pytest.mark.asyncio
-async def test_chat_honors_incoming_request_id():
+async def test_chat_honors_incoming_request_id(monkeypatch):
+    """Verifies X-Request-ID middleware without hitting Groq.
+    Mocks the orchestrator so the test is fast, deterministic, and free."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.post(
@@ -78,23 +131,37 @@ async def test_chat_persists_user_message_to_db(db):
     from sqlalchemy import select
     from app.db.models import Conversation, Message
 
+    session_id = f"chat-persist-{uuid.uuid4()}"
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         await client.post(
             "/v1/chat",
-            json={"session_id": "test-api-sess-5", "message": "remember me"},
+            json={
+                "session_id": session_id,
+                "message": "remember me",
+            },
         )
 
-    # Fresh session — the test client uses its own session, so we read with ours
-    conv = (await db.execute(
-        select(Conversation).where(Conversation.session_id == "test-api-sess-5")
-    )).scalar_one_or_none()
+    conv = (
+        await db.execute(
+            select(Conversation).where(
+                Conversation.session_id == session_id
+            )
+        )
+    ).scalar_one_or_none()
+
     assert conv is not None
 
-    msgs = (await db.execute(
-        select(Message).where(Message.conversation_id == conv.id).order_by(Message.created_at)
-    )).scalars().all()
-    assert len(msgs) == 2  # user + stub assistant
+    msgs = (
+        await db.execute(
+            select(Message)
+            .where(Message.conversation_id == conv.id)
+            .order_by(Message.created_at)
+        )
+    ).scalars().all()
+
+    assert len(msgs) == 2
     assert msgs[0].role == "user"
     assert msgs[0].content == "remember me"
     assert msgs[1].role == "assistant"

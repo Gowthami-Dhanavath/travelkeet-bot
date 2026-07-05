@@ -123,3 +123,4 @@ class ToolRegistry:
 
 def build_registry(lead_repo: LeadRepo | None = None):
     return ToolRegistry(lead_repo=lead_repo)
+
