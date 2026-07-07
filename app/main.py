@@ -1,4 +1,5 @@
 """FastAPI application factory."""
+# Day 13 rebuild trigger
 import sys
 print("[BOOT] main.py loading", file=sys.stderr, flush=True)
 import logging
