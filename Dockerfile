@@ -32,4 +32,4 @@ EXPOSE 8000
 # Migrations run at container start, then uvicorn.
 # Railway's startCommand in railway.json takes precedence in cloud;
 # this CMD keeps `docker run` viable for local prod-parity testing.
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 75"]
+CMD ["sh", "-c", "python -m alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 75"]
