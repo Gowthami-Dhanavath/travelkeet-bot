@@ -1,9 +1,9 @@
 """FastAPI application factory."""
 # Day 13 rebuild trigger
 import sys
-print("[BOOT] main.py loading", file=sys.stderr, flush=True)
+
 import logging
-print("[BOOT] stdlib imports OK", file=sys.stderr, flush=True)
+
 
 import traceback
 logging.basicConfig(
@@ -13,20 +13,20 @@ logging.basicConfig(
 )
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-print("[BOOT] fastapi imports OK", file=sys.stderr, flush=True)
+
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
 from app.api.admin.health import router as admin_health_router
-print("[BOOT] admin router imported OK", file=sys.stderr, flush=True)
+
 from app.api.v1.chat import router as chat_router
-print("[BOOT] chat router imported OK", file=sys.stderr, flush=True)
+
 from app.config import settings
-print("[BOOT] settings loaded OK", file=sys.stderr, flush=True)
+
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestIdMiddleware
-print("[BOOT] app.core imports OK", file=sys.stderr, flush=True)
+
 
 from app.core.rate_limit import limiter, rate_limit_handler
 

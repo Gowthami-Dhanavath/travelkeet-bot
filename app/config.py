@@ -50,6 +50,3 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Debug prints — remove after Day 13 is green
-print(f"[STARTUP] DATABASE_URL raw: {repr(settings.database_url)}", file=sys.stderr, flush=True)
-print(f"[STARTUP] async_database_url: {repr(settings.async_database_url)}", file=sys.stderr, flush=True)
-print(f"[STARTUP] groq_api_key length: {len(settings.groq_api_key)}", file=sys.stderr, flush=True)
