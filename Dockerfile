@@ -16,7 +16,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for Docker layer caching
-COPY requirements.txt .
+COPY requirements.txt ./requirements.txt
+RUN cat requirements.txt
 RUN pip install --upgrade pip \
     && pip install -r requirements.txt
 
