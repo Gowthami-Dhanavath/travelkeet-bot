@@ -1,0 +1,41 @@
+# Environment
+.env
+.env.local
+.env.*.local
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs / notes / scratch — not needed at runtime
+docs/
+notes/
+scripts/hello_gemini.py
+
+# Tests — not needed at runtime, save build time
+tests/
+
+# Local docker
+docker/
