@@ -32,3 +32,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+import sys
+print(f"[STARTUP] DATABASE_URL raw: {repr(settings.database_url)}", file=sys.stderr, flush=True)
+print(f"[STARTUP] async_database_url: {repr(settings.async_database_url)}", file=sys.stderr, flush=True)
