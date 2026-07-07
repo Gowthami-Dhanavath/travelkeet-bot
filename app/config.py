@@ -1,4 +1,5 @@
 """App configuration settings."""
+import sys
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -9,29 +10,46 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        case_sensitive=False,
     )
 
-    cors_origins: list[str] = []
-    database_url: str = Field(..., alias="DATABASE_URL")
+    # Required
+    database_url: str = Field(..., validation_alias=AliasChoices("DATABASE_URL"))
+
+    # LLM — accept multiple aliases in case older env has GROK_/XAI_
+    groq_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("GROQ_API_KEY", "GROK_API_KEY", "XAI_API_KEY"),
+    )
+
+    # Optional (Railway sets these; missing ones default to empty)
+    allowed_origins: str = ""
+    admin_api_key_hash: str = ""
+    resend_api_key: str = ""
+
+    # DB pool tuning (defaults are fine)
+    db_pool_size: int = 10
+    db_max_overflow: int = 5
+    db_pool_timeout: int = 30
+    db_pool_recycle: int = 1800
+    db_echo: bool = False
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
 
     @property
     def async_database_url(self) -> str:
-        """Return DATABASE_URL with the asyncpg driver prefix.
-
-        Railway injects postgresql://... — SQLAlchemy async needs
-        postgresql+asyncpg://... This normalizes for either format.
-        """
+        """Normalize Railway's postgresql:// to postgresql+asyncpg://."""
         url = self.database_url
         if url.startswith("postgresql://") and "+asyncpg" not in url:
             return url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
-    grok_api_key: str = Field(
-        default="",
-        validation_alias=AliasChoices("GROK_API_KEY", "XAI_API_KEY"),
-    )
 
 
 settings = Settings()
-import sys
+
+# Debug prints — remove after Day 13 is green
 print(f"[STARTUP] DATABASE_URL raw: {repr(settings.database_url)}", file=sys.stderr, flush=True)
 print(f"[STARTUP] async_database_url: {repr(settings.async_database_url)}", file=sys.stderr, flush=True)
+print(f"[STARTUP] groq_api_key length: {len(settings.groq_api_key)}", file=sys.stderr, flush=True)
