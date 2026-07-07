@@ -13,9 +13,9 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = []
 
-    grok_api_key: str = Field(
+    groq_api_key: str = Field(
         default="",
-        validation_alias=AliasChoices("GROK_API_KEY", "XAI_API_KEY"),
+        validation_alias=AliasChoices("GROQ_API_KEY", "XAI_API_KEY"),
     )
 
 

@@ -5,13 +5,13 @@ from openai import AsyncOpenAI
 from app.config import settings
 
 
-class GrokClient:
+class GroqClient:
     def __init__(self):
-        if not settings.grok_api_key:
-            raise RuntimeError("GROK_API_KEY not set")
+        if not settings.groq_api_key:
+            raise RuntimeError("GROQ_API_KEY not set")
 
         self._client = AsyncOpenAI(
-            api_key=settings.grok_api_key,
+            api_key=settings.groq_api_key,
             base_url="https://api.x.ai/v1",
         )
 
@@ -23,7 +23,7 @@ class GrokClient:
 
         start = time.perf_counter()
         response = await self._client.chat.completions.create(
-            model="grok-4-fast",
+            model="groq-4-fast",
             messages=messages,
             tools=tools,
         )

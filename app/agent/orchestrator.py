@@ -6,7 +6,7 @@ from app.agent.slots import SlotExtractor
 from app.agent.tools.registry import ToolRegistry
 from app.db.models import ToolCall
 from app.db.repositories import ConversationRepo, MessageRepo
-from app.integrations.grok import GrokClient
+from app.integrations.groq import GroqClient
 from prompts.system_prompt import build_system_prompt
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ def _tool_call_to_openai(call):
 class AgentOrchestrator:
     def __init__(
         self,
-        client: GrokClient,
+        client: GroqClient,
         conv_repo: ConversationRepo,
         msg_repo: MessageRepo,
         tools: ToolRegistry,

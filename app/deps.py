@@ -17,7 +17,7 @@ from app.db.repositories import (
     MessageRepo,
 )
 from app.db.session import get_db_session
-from app.integrations.grok import GrokClient
+from app.integrations.groq import GroqClient
 
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
@@ -61,8 +61,8 @@ VanRepoDep = Annotated[
 
 
 @lru_cache(maxsize=1)
-def get_grok_model():
-    return GrokClient()
+def get_groq_model():
+    return GroqClient()
 
 
 async def get_orchestrator(
@@ -71,7 +71,7 @@ async def get_orchestrator(
     lead_repo: LeadRepoDep,
 ):
     return AgentOrchestrator(
-        client=get_grok_model(),
+        client=get_groq_model(),
         conv_repo=conv_repo,
         msg_repo=msg_repo,
         tools=build_registry(lead_repo=lead_repo),
