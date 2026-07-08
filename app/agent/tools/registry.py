@@ -78,6 +78,12 @@ class ToolRegistry:
             num_people=args.get("num_people") or args.get("num_adults") or args.get("travelers"),
             budget_inr=args.get("budget_inr") or args.get("budget"),
         )
+        # Fire notification async — non-blocking. Failures don't break lead capture.
+        try:
+            from app.integrations.notifications import send_lead_notification
+            await send_lead_notification(lead)
+        except Exception:
+            logger.warning("Lead notification failed but lead was saved", exc_info=True)
         return {
             "success": True,
             "lead_id": str(lead.id),

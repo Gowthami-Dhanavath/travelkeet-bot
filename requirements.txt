@@ -4,3 +4,4 @@ httpx==0.27.2
 slowapi==0.1.9
 
 openai==2.44.0
+resend==2.32.2

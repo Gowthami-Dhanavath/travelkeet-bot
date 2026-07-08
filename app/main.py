@@ -8,19 +8,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
-from app.api.admin.health import router as admin_health_router
 from app.api.v1.chat import router as chat_router
+from app.api.admin.health import router as admin_health_router
+
+from app.api.admin.leads import router as admin_leads_router
 from app.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestIdMiddleware
 from app.core.rate_limit import limiter, rate_limit_handler
-
+from app.api.admin.sync import router as admin_sync_router
 
 def create_app() -> FastAPI:
     configure_logging("INFO")
     logger = logging.getLogger(__name__)
-
+    
     # ✅ DEBUG ENABLED (safe for now)
     app = FastAPI(
         title="TravelKeet Bot",
@@ -28,6 +30,7 @@ def create_app() -> FastAPI:
         description="AI trip planner for TravelKeet campervan rentals",
         debug=True,   # 🔥 IMPORTANT
     )
+    
 
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
@@ -47,7 +50,8 @@ def create_app() -> FastAPI:
 
     app.include_router(chat_router)
     app.include_router(admin_health_router)
-
+    app.include_router(admin_leads_router)
+    app.include_router(admin_sync_router)
     @app.get("/v1/health", tags=["health"])
     async def health():
         return {

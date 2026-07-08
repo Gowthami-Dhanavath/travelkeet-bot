@@ -18,6 +18,7 @@ class GroqClient:
     """Groq chat client via OpenAI SDK."""
 
     def __init__(self):
+        print("GROQ =", repr(settings.groq_api_key))
         if not settings.groq_api_key:
             raise RuntimeError("GROQ_API_KEY not set")
 
