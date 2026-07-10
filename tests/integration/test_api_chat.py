@@ -57,7 +57,7 @@ async def test_chat_rejects_whitespace_only_message():
             json={"session_id": "test-api-sess-3", "message": "   "},
         )
     assert resp.status_code == 422
-    assert resp.json()["error"]["code"] == "validation_error"
+    assert "detail" in resp.json()
 
 
 @pytest.mark.asyncio

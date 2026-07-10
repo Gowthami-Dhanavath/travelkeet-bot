@@ -25,5 +25,7 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     sales_notification_email: str = ""
     sync_feed_url: str = ""
+    sentry_dsn: str = ""
+    sentry_environment: str = "local"
 
 settings = Settings()

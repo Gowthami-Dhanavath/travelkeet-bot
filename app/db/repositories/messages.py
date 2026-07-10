@@ -78,3 +78,15 @@ class MessageRepo:
             )
         )
         return result.scalar_one()
+    async def count_by_role(self, conversation_id, role: str) -> int:
+        """Count messages of a given role in a conversation."""
+        from sqlalchemy import func, select
+        from app.db.models import Message
+
+        result = await self.session.execute(
+            select(func.count(Message.id)).where(
+                Message.conversation_id == conversation_id,
+                Message.role == role,
+            )
+        )
+        return result.scalar_one()

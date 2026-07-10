@@ -4,7 +4,7 @@ import sys
 import traceback
 import asyncio
 import time
-
+import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -25,6 +25,10 @@ from app.core.middleware import RequestIdMiddleware
 from app.core.rate_limit import limiter, rate_limit_handler
 from app.api.admin.sync import router as admin_sync_router
 from app.api.admin.metrics import router as admin_metrics_router
+
+
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 # Setup logger globally so helper functions can access it
 logger = logging.getLogger(__name__)
 
@@ -81,9 +85,25 @@ async def _check_resend() -> dict:
     }
 
 
+
+def _init_sentry():
+    if not settings.sentry_dsn:
+        return
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.sentry_environment,
+        integrations=[
+            StarletteIntegration(),
+            FastApiIntegration(),
+        ],
+        traces_sample_rate=0.1,       # 10% of requests traced for perf
+        profiles_sample_rate=0.1,
+        send_default_pii=False,       # Don't leak user text
+    )
+
 def create_app() -> FastAPI:
     configure_logging("INFO")
-    
+    _init_sentry()
     # ✅ DEBUG ENABLED (safe for now)
     app = FastAPI(
         title="TravelKeet Bot",
@@ -95,6 +115,13 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
     app.add_middleware(RequestIdMiddleware)
+    from app.core.anti_flood import AntiFloodMiddleware
+    app.add_middleware(
+        AntiFloodMiddleware,
+        burst_limit=15,
+        window_seconds=60,
+        ban_seconds=3600,
+    )
     
     _cors_origins = settings.cors_origins or ["*"]
     app.add_middleware(
