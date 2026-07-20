@@ -1,4 +1,5 @@
 """Sales team notifications via Resend."""
+import asyncio
 import logging
 from typing import Any
 
@@ -64,12 +65,15 @@ async def send_lead_notification(
     )
 
     try:
-        response = resend.Emails.send({
-            "from": "TravelKeet AI <onboarding@resend.dev>",
-            "to": [settings.sales_notification_email],
-            "subject": subject,
-            "html": html,
-        })
+        response = await asyncio.to_thread(
+            resend.Emails.send,
+       {
+                "from": "TravelKeet AI <onboarding@resend.dev>",
+                "to": [settings.sales_notification_email],
+                "subject": subject,
+                "html": html,
+    },
+)
         logger.info(
             "Lead email sent",
             extra={"lead_id": str(lead.id), "resend_id": response.get("id")},
