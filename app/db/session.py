@@ -8,8 +8,15 @@ import os
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/travelkeet",
+    "postgresql://postgres:postgres@localhost:5432/travelkeet",
 )
+
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace(
+        "postgresql://",
+        "postgresql+asyncpg://",
+        1,
+    )
 
 # IMPORTANT: pool_pre_ping + future compatibility
 engine = create_async_engine(
