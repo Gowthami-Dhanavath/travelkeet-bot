@@ -10,7 +10,7 @@
 
 ## Secrets rotated
 - Groq API key (old revoked)
-- Resend API key (old revoked)
+## Resend API key (old revoked)
 - Admin API key (old rows deactivated on cloud)
 
 ## Backup drill
