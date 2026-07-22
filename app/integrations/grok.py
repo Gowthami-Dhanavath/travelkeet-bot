@@ -12,7 +12,7 @@ class GroqClient:
 
         self._client = AsyncOpenAI(
             api_key=settings.groq_api_key,
-            base_url="https://api.x.ai/v1",
+            base_url="https://api.groq.com/openai/v1",
         )
 
     async def generate_with_tools(self, system_instruction: str, history: list, tool_declarations: list):
